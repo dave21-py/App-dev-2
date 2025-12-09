@@ -1,1 +1,4 @@
 venv/
+
+dbconfig.py
+*.pyc
