@@ -129,8 +129,10 @@ def service_details():
 
     # Service Info + Songleader Name
     sql_info = """
-    select s.Svc_DateTime, s.Theme_Event, sl.songleader_name from service s
-    left join songleader sl on s.Service_ID = sl.Service_ID
+    select s.Svc_DateTime, s.Theme_Event, CONCAT(p.First_Name, ' ', p.Last_Name) as songleader_name
+    from service s
+    left join fills_role fr on s.Service_ID = fr.Service_ID AND fr.Role_Type = 'S'
+    left join person p on fr.Person_ID = p.Person_ID
     where s.Service_ID = %s
     """
 
@@ -154,7 +156,7 @@ def service_details():
     from service_item si
     join event_type et on si.Event_Type_ID = et.Event_Type_ID
     left join song s on si.Song_ID = s.Song_ID
-    left join person p on si.Person_ID = p.Person_id
+    left join person p on si.Person_ID = p.Person_ID
     where si.Service_ID = %s
     order by si.Seq_Num
     """  
@@ -190,14 +192,24 @@ def service_details():
         </tr>
         """
 
+    sql_leaders = """
+    select distinct First_Name, Last_Name
+    from person p
+    join fills_role fr on p.Person_ID = fr.Person_ID
+    where fr.Role_Type = 'S'
+    order by Last_Name
+    """
+
     # songleaders from the dropdown menu
-    cursor.execute("select DISTINCT songleader_name from songleader order by songleader_name")
+    cursor.execute(sql_leaders)
     leaders_result = cursor.fetchall()
 
     leaders_option = ""
     for row in leaders_result:
-        name = row[0]
-        leaders_option += f"<option value='{name}'>{name}</option>"
+        first = row[0]
+        last = row[1]
+        full_name = f"{first} {last}"
+        leaders_option += f"<option value='{full_name}'>{full_name}</option>"
 
     cursor.close()
     con.close()
