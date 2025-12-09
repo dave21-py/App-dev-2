@@ -4,7 +4,6 @@
 #   pip install flask
 
 import time
-import html
 from datetime import datetime
 
 from flask import Flask, request
@@ -178,7 +177,7 @@ def details(id):
     cursor.close()
     con.close()
 
-    return HTML_DETAILS.format(header, tableRows, time, theme, id)
+    return HTML_DETAILS.format(header, tableRows, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), theme, id)
 
 
 # Launch the local web server
