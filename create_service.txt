@@ -1,0 +1,56 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `create_service`(
+    IN templateID INT,
+    IN newDateTime DATETIME,
+    IN newTheme VARCHAR(255),
+    IN newSongleader VARCHAR(255),
+    OUT statusCode INT
+)
+BEGIN
+    DECLARE existingService INT;
+    DECLARE songleaderID INT;
+
+    -- check if service already exists
+    SELECT COUNT(*) INTO existingService
+    FROM service
+    WHERE Svc_DateTime = newDateTime;
+
+    IF existingService > 0 THEN
+        SET statusCode = 1; -- already exists
+    ELSE
+
+        -- insert new service
+        INSERT INTO service (Svc_DateTime, Theme_Event)
+        VALUES (newDateTime, newTheme);
+
+        SET @newServiceID = LAST_INSERT_ID();
+		
+        -- check songleader person_ID
+        IF newSongleader IS NOT NULL AND newSongleader != '' THEN
+            
+            SELECT Person_ID INTO songleaderID
+            FROM person
+            WHERE CONCAT(First_Name, ' ', Last_Name) = newSongleader
+            LIMIT 1;
+
+            -- insert row in fills_role if found
+            IF songleaderID IS NOT NULL THEN
+                INSERT INTO fills_role (Service_ID, Person_ID, Role_Type)
+                VALUES (@newServiceID, songleaderID, 'S');
+            END IF;
+        END IF;
+
+        -- Copy service items
+        INSERT INTO service_item (Service_ID, Seq_Num, Event_Type_ID, Song_ID, Person_ID, Notes)
+        SELECT 
+            @newServiceID,
+            Seq_Num,
+            Event_Type_ID,
+            NULL,   
+            NULL,  
+            Notes
+        FROM service_item
+        WHERE Service_ID = templateID;
+
+        SET statusCode = 0; 
+    END IF;
+END
