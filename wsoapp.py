@@ -219,6 +219,58 @@ def service_details():
 
     return HTML_DETAILS.format(svc_datetime, theme, songleader, event_rows, current_time, leaders_option, service_id)
 
+
+@app.route("/create_service", methods=['POST'])
+def create_service_action():
+    template_id = request.form.get("template_id")
+    new_date = request.form.get("new_date")
+    new_theme = request.form.get("new_theme")
+    new_songleader = request.form.get("new_songleader")
+
+    if not new_theme: new_theme = None
+    if not new_songleader: new_songleader = None
+
+    con = connect(
+        user=dbconfig.DB_USER,
+        password=dbconfig.DB_PASS,
+        database=dbconfig.DB_NAME,
+        host=dbconfig.DB_HOST,
+    )
+    cursor = con.cursor()
+
+    args = [template_id, new_date, new_theme, new_songleader, 0] # 0 as placeholder 
+    result_args = cursor.callproc('create_service', args)
+    result_code = result_args[4]
+    con.commit()
+    cursor.close()
+    con.close()
+
+
+    if result_code == 1:
+        return f"""
+        <html><body>
+        <h1>ERROR</h1>
+        <p>SERVICE ALREADY EXISTS: {new_date}</p>
+        </body></html>
+        """
+    else:
+        return f"""
+        <html><body>
+        <h1>SUCESS</h1>
+        <p>NEW SERVICE CREATED!</p>
+        <ul>
+        <li>Date: {new_date}</li>
+        <li>Theme: {new_theme}</li>
+        <li>Songleader: {new_songleader}</li>
+        </ul>
+        <p><a href='/'>RETURN TO THE HOME PAGE</a></p>
+        </body></html>
+        """
+
+
+
+
+
 # Launch the local web server
 if __name__ == "__main__":
     app.run(host="localhost", debug=True)

@@ -1,4 +1,6 @@
-CREATE DEFINER=`root`@`localhost` PROCEDURE `create_service`(
+DELIMITER //
+DROP PROCEDURE IF EXISTS create_service //
+CREATE PROCEDURE create_service(
     IN templateID INT,
     IN newDateTime DATETIME,
     IN newTheme VARCHAR(255),
@@ -34,23 +36,26 @@ BEGIN
 
             -- insert row in fills_role if found
             IF songleaderID IS NOT NULL THEN
-                INSERT INTO fills_role (Service_ID, Person_ID, Role_Type)
+                INSERT INTO fills_role (Service_ID, Person_ID, Role_Type, Confirmed)
                 VALUES (@newServiceID, songleaderID, 'S');
             END IF;
         END IF;
 
         -- Copy service items
-        INSERT INTO service_item (Service_ID, Seq_Num, Event_Type_ID, Song_ID, Person_ID, Notes)
+        INSERT INTO service_item (Service_ID, Seq_Num, Event_Type_ID, Song_ID, Person_ID, Notes, Confirmed)
         SELECT 
             @newServiceID,
             Seq_Num,
             Event_Type_ID,
             NULL,   
             NULL,  
-            Notes
+            Notes,
+            'N'
         FROM service_item
         WHERE Service_ID = templateID;
 
         SET statusCode = 0; 
     END IF;
-END
+END //
+
+DELIMITER ;
